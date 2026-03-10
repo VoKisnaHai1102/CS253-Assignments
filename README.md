@@ -17,7 +17,7 @@ A fast, buffered C++ tool for building word frequency indexes from text files an
 ## Build
 
 ```bash
-g++ -std=c++17 -O2 -o analyzer main.cpp
+g++ -std=c++17 -O2 -o analyzer 240563_Krishna.cpp
 ```
 
 ---
@@ -115,8 +115,9 @@ Total Execution Time: 0.062 seconds
 
 ```
 .
-├── main.cpp                 # Full source
+├── indexer.cpp                 # Full source
 ├── README.md
+├── Assignment_report.pdf
 └── ...
 ```
 

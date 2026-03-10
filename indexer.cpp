@@ -202,7 +202,7 @@ public:
         int freq2 = index2.getFrequency(targetWord);
         cout << "Difference Result for '" << targetWord << "':\n";
         cout << index1.getVersion() << ": " << freq1 << " | " << index2.getVersion() << ": " << freq2 << "\n";
-        cout << "Difference: " << freq1 - freq2 << "\n";
+        cout << "Difference: " << (freq1 - freq2) << "\n";
     }
 };
 
@@ -222,13 +222,15 @@ int main(int argc, char* argv[]) {
     auto start_time = high_resolution_clock::now();
 
     string file1, file2, version1, version2, queryType, targetWord;
-    int bufferKb = 0, topK = 0;
+    int bufferKb = -1;
+    int topK = 0;
+
 
     try {
         for (int i = 1; i < argc; ++i) {
             string arg = argv[i];
-            if (i + 1 >= argc) {
-                throw invalid_argument("Missing value for argument: " + arg);
+            if (i + 1 >= argc || string(argv[i + 1]).substr(0, 2) == "--") {
+                throw invalid_argument("Missing or invalid value for argument: " + arg);
             }
             if (arg == "--file") file1 = argv[++i];
             else if (arg == "--file1") file1 = argv[++i];
@@ -246,29 +248,32 @@ int main(int argc, char* argv[]) {
         if (queryType.empty()) {
             throw invalid_argument("You must specify a query type using --query (word, top, or diff).");
         }
-        if (bufferKb < 256 || bufferKb > 1024) {
-             throw invalid_argument("Buffer size must be between 256 KB and 1024 KB.");
-        }
-        if (topK < 1) {
-            throw invalid_argument("Top K must be a positive integer.");
-        }
+        
         if (queryType == "word") {
-            if (file1.empty() || version1.empty() || targetWord.empty()) {
-                throw invalid_argument("Error: A 'word' query requires --file, --version, and --word.");
+            if (file1.empty() || version1.empty() || targetWord.empty() || bufferKb==-1) {
+                throw invalid_argument("Error: A 'word' query requires --file, --version, --word, and --buffer.");
             }
         } 
         else if (queryType == "top") {
-            if (file1.empty() || version1.empty() || topK < 1) {
-                throw invalid_argument("Error: A 'top' query requires --file, --version, and a valid --top (>= 1).");
+            if (file1.empty() || version1.empty() || bufferKb==-1) {
+                throw invalid_argument("Error: A 'top' query requires --file, --version, --buffer,and a valid --top (>= 1).");
             }
         } 
         else if (queryType == "diff") {
-            if (file1.empty() || file2.empty() || version1.empty() || version2.empty() || targetWord.empty()) {
-                throw invalid_argument("Error: A 'diff' query requires --file1, --file2, --version1, --version2, and --word.");
+            if (file1.empty() || file2.empty() || version1.empty() || version2.empty() || targetWord.empty()|| bufferKb==-1) {
+                throw invalid_argument("Error: A 'diff' query requires --file1, --file2, --version1, --version2, --word, and --buffer.");
             }
         } 
         else {
             throw invalid_argument("Error: Invalid query type '" + queryType + "'. Allowed: word, top, diff.");
+        }
+        
+        if (bufferKb < 256 || bufferKb > 1024) {
+             throw invalid_argument("Buffer size must be between 256 KB and 1024 KB.");
+        }
+        
+        if (topK < 1 && queryType == "top") {
+            throw invalid_argument("Top K must be a positive integer.");
         }
         cout << "Allocated Buffer Size: " << bufferKb << " KB\n";
         if (queryType == "word" || queryType == "top") {
